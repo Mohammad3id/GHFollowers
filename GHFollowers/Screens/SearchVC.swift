@@ -37,6 +37,7 @@ class SearchVC: UIViewController {
         view.addGestureRecognizer(tap)
     }
     
+    
     @objc func pushFollowerListVC() {
         guard isUsernameEntered else {
             presentGFAlertOnMainThread(
@@ -59,9 +60,11 @@ class SearchVC: UIViewController {
         
         logoImageView.translatesAutoresizingMaskIntoConstraints = false
         logoImageView.image = UIImage(named: "gh-logo")!
-
+        
+        let topGap: CGFloat = DeviceTypes.isiPhoneSE || DeviceTypes.isiPhone8Zoomed ? 20 : 80
+        
         NSLayoutConstraint.activate([
-            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 80),
+            logoImageView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: topGap),
             logoImageView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
             logoImageView.heightAnchor.constraint(equalToConstant: 200),
             logoImageView.widthAnchor.constraint(equalToConstant: 200)
