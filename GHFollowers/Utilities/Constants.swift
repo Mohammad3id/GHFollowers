@@ -30,3 +30,7 @@ enum DeviceTypes {
     static let isiPhoneSE = idiom == .phone && ScreenSize.maxLength == 568.0
     static let isiPhone8Zoomed = idiom == .phone && ScreenSize.maxLength == 667.0 && nativeScale > scale
 }
+
+enum Images {
+    static let ghLogo = UIImage(named: "gh-logo")
+}
