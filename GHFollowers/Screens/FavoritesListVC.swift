@@ -12,6 +12,7 @@ class FavoritesListVC: GFDataLoadingVC {
     let tableView = UITableView()
     var favorites = [Follower]()
     
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -50,25 +51,32 @@ class FavoritesListVC: GFDataLoadingVC {
             
             switch result {
             case .success(let favorites):
-                if favorites.isEmpty {
-                    self.showEmptyStateView(with: "No Favorites?\nAdd one on the followers screen.", in: self.view)
-                } else {
-                    self.favorites = favorites
-                    DispatchQueue.main.async {
-                        self.tableView.reloadData()
-                        self.view.bringSubviewToFront(self.tableView)
-                    }
-                }
+                self.updateUI(with: favorites)
                 
             case .failure(let error):
                 self.presentGFAlertOnMainThread(title: "Somehting went wrong", message: error.rawValue, buttonTitle: "OK")
             }
         }
     }
+    
+    
+    func updateUI(with favorites: [Follower]) {
+        if favorites.isEmpty {
+            self.showEmptyStateView(with: "No Favorites?\nAdd one on the followers screen.", in: self.view)
+        } else {
+            self.favorites = favorites
+            DispatchQueue.main.async {
+                self.tableView.reloadData()
+                self.view.bringSubviewToFront(self.tableView)
+            }
+        }
+    }
+    
 }
 
 
 extension FavoritesListVC: UITableViewDataSource, UITableViewDelegate {
+    
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         favorites.count
     }
@@ -88,16 +96,21 @@ extension FavoritesListVC: UITableViewDataSource, UITableViewDelegate {
         navigationController?.pushViewController(destVC, animated: true)
     }
     
+    
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         guard editingStyle == .delete else { return }
         
-        let favorite = favorites.remove(at: indexPath.row)
-        tableView.deleteRows(at: [indexPath], with: .left)
-        
-        PersistenceManager.updateFavorites(with: favorite, actionType: .remove) { [weak self] error in
-            guard let error else { return }
+        PersistenceManager.updateFavorites(with: favorites[indexPath.row], actionType: .remove) { [weak self] error in
+            guard let self else { return }
             
-            self?.presentGFAlertOnMainThread(title: "Unable to remove", message: error.rawValue, buttonTitle: "OK")
+            guard let error else {
+                self.favorites.remove(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .left)
+                return
+            }
+    
+            self.presentGFAlertOnMainThread(title: "Unable to remove", message: error.rawValue, buttonTitle: "OK")
         }
     }
+    
 }

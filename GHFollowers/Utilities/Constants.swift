@@ -8,29 +8,42 @@
 import UIKit
 
 enum SFSymbols {
-    static let location = "mappin.and.ellipse"
-    static let repos = "folder"
-    static let gists = "text.alignleft"
-    static let followers = "heart"
-    static let following = "person.2"
+    
+    static let location = UIImage(systemName: "mappin.and.ellipse")
+    static let repos = UIImage(systemName: "folder")
+    static let gists = UIImage(systemName: "text.alignleft")
+    static let followers = UIImage(systemName: "heart")
+    static let following = UIImage(systemName: "person.2")
+    
 }
 
+
 enum ScreenSize {
+    
     static let width = UIScreen.current.bounds.size.width
     static let height = UIScreen.current.bounds.size.height
     static let maxLength = max(width, height)
     static let minLength = min(width, height)
+    
 }
 
+
 enum DeviceTypes {
+    
     static let idiom = UIDevice.current.userInterfaceIdiom
     static let nativeScale = UIScreen.current.nativeScale
     static let scale = UIScreen.current.scale
-    
-    static let isiPhoneSE = idiom == .phone && ScreenSize.maxLength == 568.0
+
+    static let isiPhoneSE = idiom == .phone && ScreenSize.maxLength == 667.0
     static let isiPhone8Zoomed = idiom == .phone && ScreenSize.maxLength == 667.0 && nativeScale > scale
+    
 }
 
+
 enum Images {
+    
+    static let emptyStateLogo = UIImage(named: "empty-state-logo")
+    static let placeholder = UIImage(named: "avatar-placeholder")
     static let ghLogo = UIImage(named: "gh-logo")
+    
 }

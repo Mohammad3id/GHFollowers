@@ -36,7 +36,11 @@ class GFAlertVC: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         view.backgroundColor = UIColor.black.withAlphaComponent(0.75)
+        view.addSubview(containerView)
+        containerView.addSubviews(titleLabel, actionButton, messageLabel)
+        
         configureContainerView()
         configureTitleLabel()
         configureActionButton()
@@ -45,8 +49,6 @@ class GFAlertVC: UIViewController {
     
     
     func configureContainerView() {
-        view.addSubview(containerView)
-        
         NSLayoutConstraint.activate([
             containerView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
             containerView.centerXAnchor.constraint(equalTo: view.centerXAnchor),
@@ -57,8 +59,6 @@ class GFAlertVC: UIViewController {
     
     
     func configureTitleLabel() {
-        containerView.addSubview(titleLabel)
-        
         titleLabel.text = alertTitle
         
         NSLayoutConstraint.activate([
@@ -71,8 +71,6 @@ class GFAlertVC: UIViewController {
     
     
     func configureActionButton() {
-        containerView.addSubview(actionButton)
-        
         actionButton.setTitle(buttonTitle, for: .normal)
         actionButton.addTarget(self, action: #selector(dismissVC), for: .touchUpInside)
         
@@ -86,8 +84,6 @@ class GFAlertVC: UIViewController {
     
     
     func configureMessageLabel() {
-        containerView.addSubview(messageLabel)
-        
         messageLabel.text = message
         messageLabel.numberOfLines = 4
         
@@ -103,4 +99,5 @@ class GFAlertVC: UIViewController {
     @objc func dismissVC() {
         dismiss(animated: true)
     }
+    
 }
