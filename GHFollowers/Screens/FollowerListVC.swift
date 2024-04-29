@@ -87,6 +87,7 @@ class FollowerListVC: GFDataLoadingVC {
     func getFollowers(username: String, page: Int) {
         isLoadingMoreFollowers = true
         showLoadingView()
+        
         NetworkManager.shared.getFollowers(for: username, page: page) { [weak self] result in
             guard let self else { return }
             self.dismissLoadingView()
@@ -98,6 +99,7 @@ class FollowerListVC: GFDataLoadingVC {
             case .failure(let error):
                 self.presentGFAlertOnMainThread(title: "Bad Stuff Happened", message: error.rawValue, buttonTitle: "OK")
             }
+            
             self.isLoadingMoreFollowers = false
         }
     }
