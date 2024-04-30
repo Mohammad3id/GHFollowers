@@ -21,59 +21,34 @@ struct PersistenceManager {
     private init() {}
     
     
-    static func updateFavorites(with favorite: Follower, actionType: PersistenceAction, completed: @escaping (GFError?) -> Void) {
-        retrieveFavorites { result in
-            switch result {
-            case .success(var favorites):
-                
-                switch actionType {
-                case .add:
-                    guard !favorites.contains(favorite) else {
-                        completed(.alreadyInFavorites)
-                        return
-                    }
-                    
-                    favorites.append(favorite)
-                    
-                case .remove:
-                    favorites.removeAll { $0.login == favorite.login }
-                }
-                
-                completed(saveFavorites(favorites: favorites))
-                
-            case .failure(let error):
-                completed(error)
-            }
-        }
-    }
-    
-    
-    static func retrieveFavorites(completed: @escaping (Result<[Follower], GFError>) -> Void) {
-        guard let favoritesData = defaults.object(forKey: Keys.favorites) as? Data else {
-            completed(.success([]))
-            return
+    static func updateFavorites(with favorite: Follower, actionType: PersistenceAction) throws {
+        var favorites = try retrieveFavorites()
+        
+        switch actionType {
+        case .add:
+            guard !favorites.contains(favorite) else { throw GFError.alreadyInFavorites }
+            favorites.append(favorite)
+        case .remove:
+            favorites.removeAll { $0.login == favorite.login }
         }
         
-        do {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            let favorites = try decoder.decode([Follower].self, from: favoritesData)
-            completed(.success(favorites))
-        } catch {
-            completed(.failure(.unableToLoadFavorites))
-        }
+        try saveFavorites(favorites: favorites)
     }
     
     
-    static func saveFavorites(favorites: [Follower]) -> GFError? {
-        do {
-            let encoder = JSONEncoder()
-            let encodedFavorites = try encoder.encode(favorites)
-            defaults.setValue(encodedFavorites, forKey: Keys.favorites)
-            return nil
-        } catch {
-            return .unableToFavorite
-        }
+    static func retrieveFavorites() throws -> [Follower] {
+        guard let favoritesData = defaults.object(forKey: Keys.favorites) as? Data else { return [] }
+        
+        let decoder = JSONDecoder()
+        decoder.keyDecodingStrategy = .convertFromSnakeCase
+        return try decoder.decode([Follower].self, from: favoritesData)
+    }
+    
+    
+    static func saveFavorites(favorites: [Follower]) throws {
+        let encoder = JSONEncoder()
+        let encodedFavorites = try encoder.encode(favorites)
+        defaults.setValue(encodedFavorites, forKey: Keys.favorites)
     }
     
 }

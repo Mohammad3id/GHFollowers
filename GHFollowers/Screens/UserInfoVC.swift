@@ -86,15 +86,14 @@ class UserInfoVC: UIViewController {
     
     
     func getUserInfo() {
-        NetworkManager.shared.getUserInfo(for: username) { [weak self] result in
-            guard let self else { return }
-            
-            switch result {
-            case .success(let user):
-                DispatchQueue.main.async { self.configureUIElements(with: user) }
-                
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+        Task {
+            do {
+                let user = try await NetworkManager.shared.getUserInfo(for: username)
+                configureUIElements(with: user)
+            } catch let error as GFError {
+                presentGFAlert(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+            } catch {
+                presentDefaultError()
             }
         }
     }
@@ -135,7 +134,7 @@ extension UserInfoVC: GFFollowerItemVCDelegate {
     
     func didTapGetFollowers(for user: User) {
         guard user.followers != 0 else {
-            presentGFAlertOnMainThread(
+            presentGFAlert(
                 title: "No Followers",
                 message: "This user has no followers. What a shame 😞",
                 buttonTitle: "So sad"
@@ -152,7 +151,7 @@ extension UserInfoVC: GFRepoItemVCDelegate {
     
     func didTapGitHubProfile(for user: User) {
         guard let url = URL(string: user.htmlUrl) else {
-            presentGFAlertOnMainThread(
+            presentGFAlert(
                 title: "Invalid Url",
                 message: "Url attached to this user is invalid.",
                 buttonTitle: "Ok"

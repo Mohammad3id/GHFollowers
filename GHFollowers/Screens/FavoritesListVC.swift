@@ -46,29 +46,24 @@ class FavoritesListVC: GFDataLoadingVC {
 
     
     func getFavorites() {
-        PersistenceManager.retrieveFavorites { [weak self] result in
-            guard let self else { return }
-            
-            switch result {
-            case .success(let favorites):
-                self.updateUI(with: favorites)
-                
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "Somehting went wrong", message: error.rawValue, buttonTitle: "OK")
-            }
+        do {
+            let favorites = try PersistenceManager.retrieveFavorites()
+            updateUI(with: favorites)
+        } catch let error as GFError {
+            presentGFAlert(title: "Somehting went wrong", message: error.rawValue, buttonTitle: "OK")
+        } catch {
+            presentDefaultError()
         }
     }
     
     
     func updateUI(with favorites: [Follower]) {
         if favorites.isEmpty {
-            self.showEmptyStateView(with: "No Favorites?\nAdd one on the followers screen.", in: self.view)
+            showEmptyStateView(with: "No Favorites?\nAdd one on the followers screen.", in: view)
         } else {
             self.favorites = favorites
-            DispatchQueue.main.async {
-                self.tableView.reloadData()
-                self.view.bringSubviewToFront(self.tableView)
-            }
+            tableView.reloadData()
+            view.bringSubviewToFront(self.tableView)
         }
     }
     
@@ -100,16 +95,14 @@ extension FavoritesListVC: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         guard editingStyle == .delete else { return }
         
-        PersistenceManager.updateFavorites(with: favorites[indexPath.row], actionType: .remove) { [weak self] error in
-            guard let self else { return }
-            
-            guard let error else {
-                self.favorites.remove(at: indexPath.row)
-                tableView.deleteRows(at: [indexPath], with: .left)
-                return
-            }
-    
-            self.presentGFAlertOnMainThread(title: "Unable to remove", message: error.rawValue, buttonTitle: "OK")
+        do {
+            try PersistenceManager.updateFavorites(with: favorites[indexPath.row], actionType: .remove)
+            favorites.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .left)
+        } catch let error as GFError {
+            presentGFAlert(title: "Somehting went wrong", message: error.rawValue, buttonTitle: "OK")
+        } catch {
+            presentDefaultError()
         }
     }
     

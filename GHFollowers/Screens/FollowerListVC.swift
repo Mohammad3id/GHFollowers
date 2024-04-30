@@ -86,32 +86,28 @@ class FollowerListVC: GFDataLoadingVC {
     
     func getFollowers(username: String, page: Int) {
         isLoadingMoreFollowers = true
-        showLoadingView()
         
-        NetworkManager.shared.getFollowers(for: username, page: page) { [weak self] result in
-            guard let self else { return }
-            self.dismissLoadingView()
-            
-            switch result {
-            case .success(let followers):
+        Task {
+            do {
+                let followers = try await NetworkManager.shared.getFollowers(for: username, page: page)
                 updateUI(with: followers)
-                
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "Bad Stuff Happened", message: error.rawValue, buttonTitle: "OK")
+            } catch let error as GFError {
+                presentGFAlert(title: "Bad Stuff Happened", message: error.rawValue, buttonTitle: "Ok")
+            } catch {
+                presentDefaultError()
             }
-            
-            self.isLoadingMoreFollowers = false
+            isLoadingMoreFollowers = false
         }
     }
     
     
     func updateUI(with followers: [Follower]) {
-        if followers.count < 100 { self.hasMoreFollowers = false }
+        if followers.count < 100 { hasMoreFollowers = false }
         self.followers.append(contentsOf: followers)
         
         if self.followers.isEmpty {
             let message = "This user doesn't have any followers. Go follow them 😀."
-            DispatchQueue.main.async { self.showEmptyStateView(with: message, in: self.view) }
+            showEmptyStateView(with: message, in: self.view)
             return
         }
         
@@ -138,37 +134,33 @@ class FollowerListVC: GFDataLoadingVC {
     
     @objc func addButtonTapped() {
         showLoadingView()
-        
-        NetworkManager.shared.getUserInfo(for: username) { [weak self] result in
-            guard let self else { return }
-            
-            self.dismissLoadingView()
-            
-            switch result {
-            case .success(let user):
-                self.addUserToFavorites(user: user)
-        
-            case .failure(let error):
-                self.presentGFAlertOnMainThread(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+        Task {
+            do {
+                let user = try await NetworkManager.shared.getUserInfo(for: username)
+                addUserToFavorites(user: user)
+            } catch let error as GFError {
+                presentGFAlert(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+            } catch {
+                presentDefaultError()
             }
+            dismissLoadingView()
         }
     }
     
     
     func addUserToFavorites(user: User) {
         let favorite = Follower(login: user.login, avatarUrl: user.avatarUrl)
-        PersistenceManager.updateFavorites(with: favorite, actionType: .add) { error in
-            guard let error else {
-                self.presentGFAlertOnMainThread(
-                    title: "Success!",
-                    message: "You have successfully favorited this user 🎉",
-                    buttonTitle: "Hooray!"
-                )
-                
-                return
-            }
-            
-            self.presentGFAlertOnMainThread(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+        do {
+            try PersistenceManager.updateFavorites(with: favorite, actionType: .add)
+            presentGFAlert(
+                title: "Success!",
+                message: "You have successfully favorited this user 🎉",
+                buttonTitle: "Hooray!"
+            )
+        } catch let error as GFError {
+            presentGFAlert(title: "Something went wrong", message: error.rawValue, buttonTitle: "Ok")
+        } catch {
+            presentDefaultError()
         }
     }
     
@@ -176,13 +168,13 @@ class FollowerListVC: GFDataLoadingVC {
 
 extension FollowerListVC: UICollectionViewDelegate {
     
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let offsetY = scrollView.contentOffset.y
         let contentHeight = scrollView.contentSize.height
         let height = scrollView.frame.size.height
         
-        if offsetY > contentHeight - height {
-            guard hasMoreFollowers, !isLoadingMoreFollowers else { return }
+        if offsetY > contentHeight - height * 2 {
+            guard hasMoreFollowers, !isLoadingMoreFollowers, !isSearching else { return }
             page += 1
             getFollowers(username: username, page: page)
         }
