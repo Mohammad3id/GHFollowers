@@ -99,6 +99,9 @@ extension FavoritesListVC: UITableViewDataSource, UITableViewDelegate {
             try PersistenceManager.updateFavorites(with: favorites[indexPath.row], actionType: .remove)
             favorites.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .left)
+            if favorites.isEmpty {
+                showEmptyStateView(with: "No Favorites?\nAdd one on the followers screen.", in: view)
+            }
         } catch let error as GFError {
             presentGFAlert(title: "Somehting went wrong", message: error.rawValue, buttonTitle: "OK")
         } catch {
